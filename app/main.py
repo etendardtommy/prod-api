@@ -43,14 +43,14 @@ async def root():
     return {"message": "API Multi-Site v2 — /docs pour la documentation"}
 
 
-# Admin SPA — doit être monté EN DERNIER pour ne pas intercepter les routes API
+# Admin SPA — fallback SPA : sert le fichier s'il existe, sinon index.html
 ADMIN_DIST = os.path.join(os.path.dirname(__file__), "..", "admin_dist")
 
 if os.path.isdir(ADMIN_DIST):
-    app.mount("/admin", StaticFiles(directory=ADMIN_DIST, html=True), name="admin")
-
-    # Fallback SPA : toutes les routes /admin/* renvoient index.html
+    @app.get("/admin")
     @app.get("/admin/{full_path:path}")
-    async def serve_admin(full_path: str):
-        index = os.path.join(ADMIN_DIST, "index.html")
-        return FileResponse(index)
+    async def serve_admin(full_path: str = ""):
+        file_path = os.path.join(ADMIN_DIST, full_path)
+        if full_path and os.path.isfile(file_path):
+            return FileResponse(file_path)
+        return FileResponse(os.path.join(ADMIN_DIST, "index.html"))
