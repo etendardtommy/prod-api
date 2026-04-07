@@ -1,0 +1,20 @@
+services:
+  api:
+    container_name: multisite-api
+    build: .
+    restart: unless-stopped
+    env_file: .env
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./uploads:/app/uploads
+      - ./admin_dist:/app/admin_dist
+    networks:
+      - db-network
+    depends_on:
+      - postgres-central
+
+networks:
+  db-network:
+    external: true
+    name: db-network
