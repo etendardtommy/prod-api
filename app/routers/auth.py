@@ -21,7 +21,7 @@ async def login(data: LoginRequest, db: Session = Depends(get_db)):
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Compte désactivé",
         )
-    token = create_access_token({"sub": user.id})
+    token = create_access_token({"sub": str(user.id)})
     return {"access_token": token, "token_type": "bearer"}
 
 
