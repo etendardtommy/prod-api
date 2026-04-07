@@ -48,9 +48,12 @@ ADMIN_DIST = os.path.join(os.path.dirname(__file__), "..", "admin_dist")
 
 if os.path.isdir(ADMIN_DIST):
     @app.get("/admin")
+    async def serve_admin_root():
+        return FileResponse(os.path.join(ADMIN_DIST, "index.html"))
+
     @app.get("/admin/{full_path:path}")
-    async def serve_admin(full_path: str = ""):
+    async def serve_admin(full_path: str):
         file_path = os.path.join(ADMIN_DIST, full_path)
-        if full_path and os.path.isfile(file_path):
+        if os.path.isfile(file_path):
             return FileResponse(file_path)
         return FileResponse(os.path.join(ADMIN_DIST, "index.html"))
