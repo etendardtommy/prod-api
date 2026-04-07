@@ -9,9 +9,8 @@ __pycache__/
 venv/
 env/
 
-# Uploads & build
+# Uploads
 uploads/
-admin_dist/
 
 # Alembic generated versions
 alembic/versions/*.py
