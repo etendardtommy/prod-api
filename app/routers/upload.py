@@ -3,7 +3,7 @@ import uuid
 from fastapi import APIRouter, Depends, UploadFile, File
 from app.auth import get_current_user
 from app.models.user import User
-from app.config import UPLOAD_DIR
+from app.config import UPLOAD_DIR, API_PUBLIC_URL
 
 router = APIRouter()
 
@@ -22,4 +22,4 @@ async def upload_file(
         content = await file.read()
         f.write(content)
 
-    return {"filename": filename, "url": f"/uploads/{filename}"}
+    return {"filename": filename, "url": f"{API_PUBLIC_URL}/uploads/{filename}"}

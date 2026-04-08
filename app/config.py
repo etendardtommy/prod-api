@@ -18,3 +18,4 @@ ALLOWED_ORIGINS = [
 ]
 
 UPLOAD_DIR = os.getenv("UPLOAD_DIR", "uploads")
+API_PUBLIC_URL = os.getenv("API_PUBLIC_URL", "https://api.t-etendard.fr")
