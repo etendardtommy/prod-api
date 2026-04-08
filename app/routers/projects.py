@@ -1,5 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
+from sqlalchemy.exc import IntegrityError
 from app.database import get_db
 from app.auth import get_current_user
 from app.models.project import Project
@@ -56,7 +57,11 @@ async def create_project(
 ):
     project = Project(**data.model_dump())
     db.add(project)
-    db.commit()
+    try:
+        db.commit()
+    except IntegrityError:
+        db.rollback()
+        raise HTTPException(status_code=409, detail="Ce slug existe déjà, choisissez-en un autre.")
     db.refresh(project)
     return project
 
