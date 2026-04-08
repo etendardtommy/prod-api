@@ -7,7 +7,7 @@ Type=simple
 User=tommy
 WorkingDirectory=/srv/api
 EnvironmentFile=/srv/api/.env
-ExecStart=/srv/api/.venv/bin/uvicorn app.main:app --host 0.0.0.0 --port 8000
+ExecStart=/srv/api/.venv/bin/uvicorn app.main:app --host 0.0.0.0 --port 8000 --proxy-headers --forwarded-allow-ips=*
 Restart=on-failure
 RestartSec=5
 
