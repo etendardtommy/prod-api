@@ -1,4 +1,5 @@
 import { useEffect, useState, useRef, type FormEvent } from "react";
+import MDEditor from "@uiw/react-md-editor";
 import { get, post, put, del, uploadImage } from "../lib/api";
 
 interface Article {
@@ -38,6 +39,7 @@ export default function Articles() {
   const [success, setSuccess] = useState("");
   const [uploading, setUploading] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
+  const mdFileRef = useRef<HTMLInputElement>(null);
 
   const load = () => get<Article[]>("/articles").then(setItems).catch(() => {});
   useEffect(() => { load(); }, []);
@@ -72,8 +74,14 @@ export default function Articles() {
   const handleUpload = async (file: File) => {
     setUploading(true);
     try { const url = await uploadImage(file); setField("image_url", url); }
-    catch { setError("Erreur upload"); }
+    catch { setError("Erreur upload image"); }
     finally { setUploading(false); }
+  };
+
+  const handleMdImport = (file: File) => {
+    const reader = new FileReader();
+    reader.onload = (e) => setField("content", e.target?.result as string);
+    reader.readAsText(file);
   };
 
   const handleSubmit = async (e: FormEvent) => {
@@ -153,40 +161,39 @@ export default function Articles() {
                 />
               </div>
               <div className="form-group full">
-                <label>Contenu (HTML)</label>
-                <textarea
-                  value={form.content || ""}
-                  onChange={(e) => setField("content", e.target.value)}
-                  rows={8}
-                />
-              </div>
-              <div className="form-group full">
-                <label>Image URL</label>
+                <label>Image</label>
                 <div className="input-upload">
-                  <input
-                    value={form.image_url || ""}
-                    onChange={(e) => setField("image_url", e.target.value)}
-                    placeholder="https://..."
-                  />
-                  <input
-                    ref={fileRef}
-                    type="file"
-                    accept="image/*"
-                    style={{ display: "none" }}
-                    onChange={(e) => e.target.files?.[0] && handleUpload(e.target.files[0])}
-                  />
-                  <button
-                    type="button"
-                    className="btn btn-secondary btn-sm"
-                    onClick={() => fileRef.current?.click()}
-                    disabled={uploading}
-                  >
-                    {uploading ? "..." : "Importer"}
+                  <input value={form.image_url || ""} onChange={(e) => setField("image_url", e.target.value)} placeholder="https://... ou importer ci-contre" />
+                  <input ref={fileRef} type="file" accept="image/*" style={{ display: "none" }}
+                    onChange={(e) => e.target.files?.[0] && handleUpload(e.target.files[0])} />
+                  <button type="button" className="btn btn-secondary btn-sm"
+                    onClick={() => fileRef.current?.click()} disabled={uploading}>
+                    {uploading ? "Envoi..." : "📎 Importer"}
                   </button>
                 </div>
                 {form.image_url && (
-                  <img src={form.image_url} alt="preview" className="thumb" style={{ marginTop: "0.4rem" }} />
+                  <img src={form.image_url} alt="preview" style={{ marginTop: "0.5rem", maxHeight: "120px", border: "var(--border-thin)" }} />
                 )}
+              </div>
+              <div className="form-group full">
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "0.4rem" }}>
+                  <label style={{ margin: 0 }}>Contenu (Markdown)</label>
+                  <div style={{ display: "flex", gap: "0.4rem" }}>
+                    <input ref={mdFileRef} type="file" accept=".md,.txt" style={{ display: "none" }}
+                      onChange={(e) => e.target.files?.[0] && handleMdImport(e.target.files[0])} />
+                    <button type="button" className="btn btn-secondary btn-sm"
+                      onClick={() => mdFileRef.current?.click()}>
+                      📄 Importer .md
+                    </button>
+                    <button type="button" className="btn btn-secondary btn-sm"
+                      onClick={() => setField("content", "")}>
+                      Vider
+                    </button>
+                  </div>
+                </div>
+                <div data-color-mode="light">
+                  <MDEditor value={form.content || ""} onChange={(v) => setField("content", v || "")} height={320} preview="live" />
+                </div>
               </div>
               <div className="form-group">
                 <label>Ordre</label>

@@ -61,7 +61,7 @@ export async function del(path: string): Promise<void> {
 export async function uploadImage(file: File): Promise<string> {
   const form = new FormData();
   form.append("file", file);
-  const r = await fetch(BASE + "/upload/image", {
+  const r = await fetch(BASE + "/upload/", {
     method: "POST",
     headers: {
       "Authorization": `Bearer ${getToken()}`,
