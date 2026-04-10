@@ -9,6 +9,7 @@ import Gallery from "./pages/Gallery";
 import Roster from "./pages/Roster";
 import Messages from "./pages/Messages";
 import Skills from "./pages/Skills";
+import About from "./pages/About";
 import { getSiteId, setSiteId } from "./lib/api";
 
 function isLoggedIn() {
@@ -23,6 +24,7 @@ const SITES = [
 const NAV_BY_SITE: Record<string, { to: string; label: string }[]> = {
   "1": [
     { to: "/", label: "Dashboard" },
+    { to: "/about", label: "À propos" },
     { to: "/projects", label: "Projets" },
     { to: "/articles", label: "Articles" },
     { to: "/experiences", label: "Expériences" },
@@ -114,6 +116,7 @@ export default function App() {
         <Route path="/roster" element={<Layout><Roster /></Layout>} />
         <Route path="/messages" element={<Layout><Messages /></Layout>} />
         <Route path="/skills" element={<Layout><Skills /></Layout>} />
+        <Route path="/about" element={<Layout><About /></Layout>} />
       </Routes>
     </BrowserRouter>
   );

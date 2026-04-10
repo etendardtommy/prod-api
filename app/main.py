@@ -9,6 +9,7 @@ from app.database import engine, Base
 from app.models import *  # noqa: F401, F403
 from app.routers import auth, roster, gallery, projects, articles, experiences, messages, analytics, upload
 from app.routers import skills
+from app.routers import about
 
 
 @asynccontextmanager
@@ -50,6 +51,7 @@ app.include_router(messages.router, prefix="/api/messages", tags=["Messages"])
 app.include_router(analytics.router, prefix="/api/analytics", tags=["Analytics"])
 app.include_router(upload.router, prefix="/api/upload", tags=["Upload"])
 app.include_router(skills.router, prefix="/api/skills", tags=["Compétences"])
+app.include_router(about.router, prefix="/api/about", tags=["À propos"])
 
 
 @app.get("/")

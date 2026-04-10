@@ -7,6 +7,7 @@ from app.models.experience import Experience
 from app.models.message import Message
 from app.models.analytics import PageView
 from app.models.skill import Skill
+from app.models.about import About
 
 __all__ = [
     "User",
@@ -18,4 +19,5 @@ __all__ = [
     "Message",
     "PageView",
     "Skill",
+    "About",
 ]
