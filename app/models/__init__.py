@@ -6,6 +6,7 @@ from app.models.article import Article
 from app.models.experience import Experience
 from app.models.message import Message
 from app.models.analytics import PageView
+from app.models.skill import Skill
 
 __all__ = [
     "User",
@@ -16,4 +17,5 @@ __all__ = [
     "Experience",
     "Message",
     "PageView",
+    "Skill",
 ]
