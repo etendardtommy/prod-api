@@ -1,5 +1,5 @@
 import { useEffect, useState, type FormEvent } from "react";
-import { get, post, put, del } from "../lib/api";
+import { get, post, put, del, getSiteId } from "../lib/api";
 
 interface Experience {
   id: number;
@@ -71,7 +71,7 @@ export default function Experiences() {
         await put(`/experience/${editing}`, form);
         setSuccess("Experience modifiee.");
       } else {
-        await post("/experience", form);
+        await post("/experience", { ...form, site_id: Number(getSiteId()) });
         setSuccess("Experience creee.");
       }
       handleCancel(); load();

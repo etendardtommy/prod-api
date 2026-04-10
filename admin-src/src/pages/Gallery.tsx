@@ -1,5 +1,5 @@
 import { useEffect, useState, useRef, type FormEvent } from "react";
-import { get, post, put, del, uploadImage } from "../lib/api";
+import { get, post, put, del, uploadImage, getSiteId } from "../lib/api";
 
 interface GalleryItem {
   id: number;
@@ -80,7 +80,7 @@ export default function Gallery() {
         await put(`/gallery/${editing}`, form);
         setSuccess("Element modifie.");
       } else {
-        await post("/gallery", form);
+        await post("/gallery", { ...form, site_id: Number(getSiteId()) });
         setSuccess("Element cree.");
       }
       handleCancel(); load();

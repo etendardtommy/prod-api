@@ -1,5 +1,5 @@
 import { useEffect, useState, useRef, type FormEvent } from "react";
-import { get, post, put, del, uploadImage } from "../lib/api";
+import { get, post, put, del, uploadImage, getSiteId } from "../lib/api";
 
 interface RosterMember {
   id: number;
@@ -83,7 +83,7 @@ export default function Roster() {
         await put(`/roster/${editing}`, form);
         setSuccess("Membre modifie.");
       } else {
-        await post("/roster", form);
+        await post("/roster", { ...form, site_id: Number(getSiteId()) });
         setSuccess("Membre cree.");
       }
       handleCancel(); load();

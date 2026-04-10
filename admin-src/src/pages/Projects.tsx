@@ -1,6 +1,6 @@
 import { useEffect, useState, useRef, type FormEvent } from "react";
 import MDEditor from "@uiw/react-md-editor";
-import { get, post, put, del, uploadImage } from "../lib/api";
+import { get, post, put, del, uploadImage, getSiteId } from "../lib/api";
 
 interface Project {
   id: number;
@@ -82,7 +82,7 @@ export default function Projects() {
     setError(""); setSuccess("");
     try {
       if (editing) { await put(`/portfolio/projects/${editing}`, form); setSuccess("Projet modifié."); }
-      else { await post("/portfolio/projects", form); setSuccess("Projet créé."); }
+      else { await post("/portfolio/projects", { ...form, site_id: Number(getSiteId()) }); setSuccess("Projet créé."); }
       handleCancel(); load();
     } catch (err) { setError(String(err)); }
   };

@@ -1,5 +1,5 @@
 import { useEffect, useState, useRef, type FormEvent } from "react";
-import { get, post, put, del, uploadImage } from "../lib/api";
+import { get, post, put, del, uploadImage, getSiteId } from "../lib/api";
 
 interface Skill {
   id: number;
@@ -68,7 +68,7 @@ export default function Skills() {
         await put(`/skills/${editing}`, form);
         setSuccess("Competence modifiee.");
       } else {
-        await post("/skills/", form);
+        await post("/skills/", { ...form, site_id: Number(getSiteId()) });
         setSuccess("Competence creee.");
       }
       handleCancel(); load();

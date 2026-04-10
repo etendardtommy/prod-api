@@ -1,6 +1,6 @@
 import { useEffect, useState, useRef, type FormEvent } from "react";
 import MDEditor from "@uiw/react-md-editor";
-import { get, post, put, del, uploadImage } from "../lib/api";
+import { get, post, put, del, uploadImage, getSiteId } from "../lib/api";
 
 interface Article {
   id: number;
@@ -90,10 +90,10 @@ export default function Articles() {
     try {
       if (editing) {
         await put(`/articles/${editing}`, form);
-        setSuccess("Article modifie.");
+        setSuccess("Article modifié.");
       } else {
-        await post("/articles", form);
-        setSuccess("Article cree.");
+        await post("/articles", { ...form, site_id: Number(getSiteId()) });
+        setSuccess("Article créé.");
       }
       handleCancel(); load();
     } catch (err) { setError(String(err)); }
