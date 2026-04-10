@@ -1,5 +1,13 @@
 const BASE = "/api";
 
+export function getSiteId(): string {
+  return localStorage.getItem("admin_site_id") || "1";
+}
+
+export function setSiteId(id: string) {
+  localStorage.setItem("admin_site_id", id);
+}
+
 function getToken() {
   return localStorage.getItem("admin_token") || "";
 }
@@ -7,7 +15,7 @@ function getToken() {
 function authHeaders(): Record<string, string> {
   return {
     "Authorization": `Bearer ${getToken()}`,
-    "x-site-id": "1",
+    "x-site-id": getSiteId(),
     "Content-Type": "application/json",
   };
 }
@@ -57,7 +65,7 @@ export async function uploadImage(file: File): Promise<string> {
     method: "POST",
     headers: {
       "Authorization": `Bearer ${getToken()}`,
-      "x-site-id": "1",
+      "x-site-id": getSiteId(),
     },
     body: form,
   });

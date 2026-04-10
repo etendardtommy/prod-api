@@ -100,6 +100,40 @@ label {
   background: rgba(255,255,255,0.08);
 }
 
+/* Site selector */
+.site-selector {
+  display: flex;
+  border-bottom: 1px solid rgba(255,255,255,0.15);
+  padding: 0.6rem 0.8rem;
+  gap: 0.4rem;
+}
+
+.site-btn {
+  flex: 1;
+  background: none;
+  border: 1px solid rgba(255,255,255,0.25);
+  color: rgba(255,255,255,0.55);
+  font-family: inherit;
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  padding: 0.35rem 0.5rem;
+  cursor: pointer;
+  transition: all 0.1s;
+}
+
+.site-btn:hover {
+  color: var(--white);
+  border-color: rgba(255,255,255,0.6);
+}
+
+.site-btn.active {
+  background: var(--white);
+  color: var(--black);
+  border-color: var(--white);
+}
+
 .sidebar-footer {
   padding: 1rem 1.2rem;
   border-top: 1px solid rgba(255,255,255,0.15);
