@@ -2,7 +2,7 @@ import { useState, type FormEvent } from "react";
 import { useNavigate } from "react-router-dom";
 
 export default function Login() {
-  const [username, setUsername] = useState("");
+  const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const navigate = useNavigate();
@@ -11,13 +11,12 @@ export default function Login() {
     e.preventDefault();
     setError("");
     try {
-      const body = new URLSearchParams({ username, password });
       const r = await fetch("/api/auth/login", {
         method: "POST",
-        headers: { "Content-Type": "application/x-www-form-urlencoded", "x-site-id": "1" },
-        body: body.toString(),
+        headers: { "Content-Type": "application/json", "x-site-id": "1" },
+        body: JSON.stringify({ email, password }),
       });
-      if (!r.ok) { setError("Identifiants incorrects"); return; }
+      if (!r.ok) { setError("Email ou mot de passe incorrect"); return; }
       const data = await r.json() as { access_token: string };
       localStorage.setItem("admin_token", data.access_token);
       navigate("/");
@@ -33,8 +32,8 @@ export default function Login() {
         {error && <div className="msg msg-error">{error}</div>}
         <form onSubmit={handleSubmit}>
           <div className="form-group">
-            <label>Identifiant</label>
-            <input value={username} onChange={(e) => setUsername(e.target.value)} required autoFocus />
+            <label>Email</label>
+            <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} required autoFocus />
           </div>
           <div className="form-group">
             <label>Mot de passe</label>
