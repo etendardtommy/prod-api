@@ -11,6 +11,7 @@ class Skill(Base):
     name = Column(String, nullable=False)
     logo_url = Column(String, nullable=True)
     category = Column(String, nullable=True)  # tags séparés par virgule
+    description = Column(String, nullable=True)
     published = Column(Boolean, default=True)
     sort_order = Column(Integer, default=0)
     created_at = Column(DateTime(timezone=True), server_default=func.now())

@@ -6,6 +6,7 @@ interface Skill {
   name: string;
   logo_url: string | null;
   category: string | null;
+  description: string | null;
   published: boolean;
   sort_order: number;
 }
@@ -14,6 +15,7 @@ const empty = (): Omit<Skill, "id"> => ({
   name: "",
   logo_url: "",
   category: "",
+  description: "",
   published: true,
   sort_order: 0,
 });
@@ -39,6 +41,7 @@ export default function Skills() {
       name: item.name,
       logo_url: item.logo_url || "",
       category: item.category || "",
+      description: item.description || "",
       published: item.published,
       sort_order: item.sort_order,
     });
@@ -98,12 +101,12 @@ export default function Skills() {
                 <input value={form.name} onChange={(e) => setField("name", e.target.value)} required />
               </div>
               <div className="form-group">
-                <label>Categorie</label>
-                <input
-                  value={form.category || ""}
-                  onChange={(e) => setField("category", e.target.value)}
-                  placeholder="Reseau,Cisco"
-                />
+                <label>Catégorie (tags, séparés par virgule)</label>
+                <input value={form.category || ""} onChange={(e) => setField("category", e.target.value)} placeholder="Réseau,Cisco" />
+              </div>
+              <div className="form-group full">
+                <label>Description</label>
+                <textarea value={form.description || ""} onChange={(e) => setField("description", e.target.value)} rows={2} placeholder="Courte description de la compétence..." />
               </div>
               <div className="form-group full">
                 <label>Logo URL</label>
