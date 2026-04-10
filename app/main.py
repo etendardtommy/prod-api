@@ -5,6 +5,8 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
 import os
 from app.config import ALLOWED_ORIGINS, UPLOAD_DIR
+from app.database import engine, Base
+from app.models import *  # noqa: F401, F403
 from app.routers import auth, roster, gallery, projects, articles, experiences, messages, analytics, upload
 from app.routers import skills
 
@@ -12,8 +14,6 @@ from app.routers import skills
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     # Crée les tables manquantes sans toucher aux existantes
-    from app.database import engine, Base
-    from app.models import *  # noqa: F401, F403
     Base.metadata.create_all(bind=engine)
     yield
 
