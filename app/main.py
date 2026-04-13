@@ -24,6 +24,9 @@ app = FastAPI(
     description="API centralisée pour Portfolio, Eclyps et Admin.",
     version="2.0.0",
     lifespan=lifespan,
+    docs_url=None,
+    redoc_url=None,
+    openapi_url=None,
 )
 
 app.add_middleware(
@@ -56,7 +59,7 @@ app.include_router(about.router, prefix="/api/about", tags=["À propos"])
 
 @app.get("/")
 async def root():
-    return {"message": "API Multi-Site v2 — /docs pour la documentation"}
+    return {"message": "API Multi-Site v2"}
 
 
 # Admin SPA — fallback SPA : sert le fichier s'il existe, sinon index.html
