@@ -12,6 +12,9 @@ env/
 # Uploads
 uploads/
 
+# Admin build output
+admin_dist/
+
 # Alembic generated versions
 alembic/versions/*.py
 !alembic/versions/.gitkeep

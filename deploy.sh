@@ -7,11 +7,17 @@ set -e
 echo "Mise à jour du code..."
 git pull origin main
 
-echo "Installation des dépendances..."
+echo "Installation des dépendances Python..."
 uv sync
 
 echo "Migrations base de données..."
 uv run alembic upgrade head
+
+echo "Build du panel admin..."
+cd admin-src
+npm ci
+npm run build
+cd ..
 
 echo "Redémarrage du service..."
 sudo systemctl restart multisite-api
