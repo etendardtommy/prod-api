@@ -14,6 +14,8 @@ class ProjectBase(BaseModel):
     published: bool = True
     featured: bool = False
     sort_order: int = 0
+    banner_link: str | None = None
+    banner_label: str | None = None
 
 
 class ProjectCreate(ProjectBase):
@@ -32,6 +34,8 @@ class ProjectUpdate(BaseModel):
     published: bool | None = None
     featured: bool | None = None
     sort_order: int | None = None
+    banner_link: str | None = None
+    banner_label: str | None = None
 
 
 class ProjectResponse(ProjectBase):
@@ -54,6 +58,8 @@ class ProjectPublic(BaseModel):
     github_url: str | None = None
     live_url: str | None = None
     featured: bool
+    banner_link: str | None = None
+    banner_label: str | None = None
     created_at: datetime
 
     model_config = {"from_attributes": True}

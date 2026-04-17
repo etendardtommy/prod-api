@@ -15,12 +15,15 @@ interface Project {
   published: boolean;
   featured: boolean;
   sort_order: number;
+  banner_link: string | null;
+  banner_label: string | null;
 }
 
 const empty = (): Omit<Project, "id"> => ({
   title: "", slug: "", description: "", content: "",
   image_url: "", technologies: "", github_url: "", live_url: "",
   published: true, featured: false, sort_order: 0,
+  banner_link: "", banner_label: "",
 });
 
 function slugify(s: string) {
@@ -52,6 +55,7 @@ export default function Projects() {
       image_url: item.image_url || "", technologies: item.technologies || "",
       github_url: item.github_url || "", live_url: item.live_url || "",
       published: item.published, featured: item.featured, sort_order: item.sort_order,
+      banner_link: item.banner_link || "", banner_label: item.banner_label || "",
     });
     setError(""); setSuccess("");
   };
@@ -193,6 +197,14 @@ export default function Projects() {
               <div className="form-group">
                 <label>Live URL</label>
                 <input value={form.live_url || ""} onChange={(e) => setField("live_url", e.target.value)} placeholder="https://..." />
+              </div>
+              <div className="form-group full">
+                <label>Bannière — Lien (optionnel)</label>
+                <input value={form.banner_link || ""} onChange={(e) => setField("banner_link", e.target.value)} placeholder="https://..." />
+              </div>
+              <div className="form-group full">
+                <label>Bannière — Texte (optionnel)</label>
+                <input value={form.banner_label || ""} onChange={(e) => setField("banner_label", e.target.value)} placeholder="Voir la démo" />
               </div>
               <div className="form-group">
                 <div className="form-check">

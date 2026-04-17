@@ -11,6 +11,8 @@ class ArticleBase(BaseModel):
     category: str | None = None
     tags: str | None = None
     published: bool = True
+    banner_link: str | None = None
+    banner_label: str | None = None
 
 
 class ArticleCreate(ArticleBase):
@@ -26,6 +28,8 @@ class ArticleUpdate(BaseModel):
     category: str | None = None
     tags: str | None = None
     published: bool | None = None
+    banner_link: str | None = None
+    banner_label: str | None = None
 
 
 class ArticleResponse(ArticleBase):
@@ -46,6 +50,8 @@ class ArticlePublic(BaseModel):
     image_url: str | None = None
     category: str | None = None
     tags: str | None = None
+    banner_link: str | None = None
+    banner_label: str | None = None
     created_at: datetime
 
     model_config = {"from_attributes": True}

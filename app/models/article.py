@@ -16,5 +16,7 @@ class Article(Base):
     category = Column(String, nullable=True)
     tags = Column(String, nullable=True)
     published = Column(Boolean, default=True)
+    banner_link = Column(String, nullable=True)
+    banner_label = Column(String, nullable=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())

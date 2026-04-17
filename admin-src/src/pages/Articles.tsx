@@ -13,6 +13,8 @@ interface Article {
   tags: string | null;
   published: boolean;
   sort_order: number;
+  banner_link: string | null;
+  banner_label: string | null;
 }
 
 const empty = (): Omit<Article, "id"> => ({
@@ -25,6 +27,8 @@ const empty = (): Omit<Article, "id"> => ({
   tags: "",
   published: true,
   sort_order: 0,
+  banner_link: "",
+  banner_label: "",
 });
 
 function slugify(s: string) {
@@ -59,6 +63,8 @@ export default function Articles() {
       tags: item.tags || "",
       published: item.published,
       sort_order: item.sort_order,
+      banner_link: item.banner_link || "",
+      banner_label: item.banner_label || "",
     });
     setError(""); setSuccess("");
   };
@@ -194,6 +200,22 @@ export default function Articles() {
                 <div data-color-mode="light">
                   <MDEditor value={form.content || ""} onChange={(v) => setField("content", v || "")} height={320} preview="live" />
                 </div>
+              </div>
+              <div className="form-group full">
+                <label>Bannière — Lien (optionnel)</label>
+                <input
+                  value={form.banner_link || ""}
+                  onChange={(e) => setField("banner_link", e.target.value)}
+                  placeholder="https://..."
+                />
+              </div>
+              <div className="form-group full">
+                <label>Bannière — Texte (optionnel)</label>
+                <input
+                  value={form.banner_label || ""}
+                  onChange={(e) => setField("banner_label", e.target.value)}
+                  placeholder="Voir la procédure complète"
+                />
               </div>
               <div className="form-group">
                 <label>Ordre</label>
