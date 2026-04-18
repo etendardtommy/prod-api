@@ -1,4 +1,5 @@
 import { useEffect, useState, useRef, type FormEvent } from "react";
+import MDEditor from "@uiw/react-md-editor";
 import { get, post, put, del, uploadImage, getSiteId } from "../lib/api";
 
 interface Skill {
@@ -113,7 +114,14 @@ export default function Skills() {
               </div>
               <div className="form-group full">
                 <label>Détails (Markdown — affiché au clic sur la carte)</label>
-                <textarea value={form.details || ""} onChange={(e) => setField("details", e.target.value)} rows={6} placeholder="Contenu détaillé : expérience, projets, niveau... Supporte le Markdown." />
+                <div data-color-mode="light">
+                  <MDEditor
+                    value={form.details || ""}
+                    onChange={(v) => setField("details", v || "")}
+                    height={280}
+                    preview="live"
+                  />
+                </div>
               </div>
               <div className="form-group full">
                 <label>Logo URL</label>
