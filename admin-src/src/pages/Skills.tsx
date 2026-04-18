@@ -7,6 +7,7 @@ interface Skill {
   logo_url: string | null;
   category: string | null;
   description: string | null;
+  details: string | null;
   published: boolean;
   sort_order: number;
 }
@@ -16,6 +17,7 @@ const empty = (): Omit<Skill, "id"> => ({
   logo_url: "",
   category: "",
   description: "",
+  details: "",
   published: true,
   sort_order: 0,
 });
@@ -42,6 +44,7 @@ export default function Skills() {
       logo_url: item.logo_url || "",
       category: item.category || "",
       description: item.description || "",
+      details: item.details || "",
       published: item.published,
       sort_order: item.sort_order,
     });
@@ -105,8 +108,12 @@ export default function Skills() {
                 <input value={form.category || ""} onChange={(e) => setField("category", e.target.value)} placeholder="Réseau,Cisco" />
               </div>
               <div className="form-group full">
-                <label>Description</label>
-                <textarea value={form.description || ""} onChange={(e) => setField("description", e.target.value)} rows={2} placeholder="Courte description de la compétence..." />
+                <label>Description (résumé court)</label>
+                <textarea value={form.description || ""} onChange={(e) => setField("description", e.target.value)} rows={2} placeholder="Courte description visible sur la carte..." />
+              </div>
+              <div className="form-group full">
+                <label>Détails (Markdown — affiché au clic sur la carte)</label>
+                <textarea value={form.details || ""} onChange={(e) => setField("details", e.target.value)} rows={6} placeholder="Contenu détaillé : expérience, projets, niveau... Supporte le Markdown." />
               </div>
               <div className="form-group full">
                 <label>Logo URL</label>

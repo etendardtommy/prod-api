@@ -7,6 +7,7 @@ class SkillBase(BaseModel):
     logo_url: str | None = None
     category: str | None = None
     description: str | None = None
+    details: str | None = None
     published: bool = True
     sort_order: int = 0
 
@@ -20,6 +21,7 @@ class SkillUpdate(BaseModel):
     logo_url: str | None = None
     category: str | None = None
     description: str | None = None
+    details: str | None = None
     published: bool | None = None
     sort_order: int | None = None
 
@@ -39,6 +41,7 @@ class SkillPublic(BaseModel):
     logo_url: str | None = None
     category: str | None = None
     description: str | None = None
+    details: str | None = None
     sort_order: int
 
     model_config = {"from_attributes": True}
