@@ -1,6 +1,6 @@
 import { useEffect, useState, useRef, type FormEvent } from "react";
 import MDEditor from "@uiw/react-md-editor";
-import { get, post, put, uploadImage } from "../lib/api";
+import { get, post, put, uploadImage, uploadCV } from "../lib/api";
 
 interface About {
   id: number;
@@ -27,7 +27,10 @@ export default function About() {
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const [uploading, setUploading] = useState(false);
+  const [uploadingCV, setUploadingCV] = useState(false);
+  const [cvSuccess, setCvSuccess] = useState("");
   const fileRef = useRef<HTMLInputElement>(null);
+  const cvFileRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     get<About | null>("/about/").then((data) => {
@@ -47,6 +50,19 @@ export default function About() {
 
   const set = (field: keyof typeof form, value: unknown) =>
     setForm((f) => ({ ...f, [field]: value }));
+
+  const handleCVUpload = async (file: File) => {
+    setUploadingCV(true);
+    setCvSuccess("");
+    try {
+      await uploadCV(file);
+      setCvSuccess("CV mis à jour.");
+    } catch {
+      setError("Erreur upload CV");
+    } finally {
+      setUploadingCV(false);
+    }
+  };
 
   const handleUpload = async (file: File) => {
     setUploading(true);
@@ -132,9 +148,22 @@ export default function About() {
               <label>LinkedIn URL</label>
               <input value={form.linkedin_url} onChange={(e) => set("linkedin_url", e.target.value)} placeholder="https://linkedin.com/in/..." />
             </div>
-            <div className="form-group">
-              <label>CV URL (PDF)</label>
-              <input value={form.cv_url} onChange={(e) => set("cv_url", e.target.value)} placeholder="https://... ou /cv.pdf" />
+            <div className="form-group full">
+              <label>CV (PDF)</label>
+              <div className="input-upload">
+                <input
+                  value={form.cv_url}
+                  onChange={(e) => set("cv_url", e.target.value)}
+                  placeholder="https://api.t-etendard.fr/api/cv"
+                />
+                <input ref={cvFileRef} type="file" accept="application/pdf" style={{ display: "none" }}
+                  onChange={(e) => e.target.files?.[0] && handleCVUpload(e.target.files[0])} />
+                <button type="button" className="btn btn-secondary btn-sm"
+                  onClick={() => cvFileRef.current?.click()} disabled={uploadingCV}>
+                  {uploadingCV ? "Envoi..." : "📎 Importer PDF"}
+                </button>
+              </div>
+              {cvSuccess && <div className="msg msg-success" style={{ marginTop: "0.4rem" }}>{cvSuccess}</div>}
             </div>
             <div className="form-group">
               <div className="form-check" style={{ marginTop: "1.8rem" }}>
