@@ -1,6 +1,6 @@
 import { useEffect, useState, useRef, type FormEvent } from "react";
 import MDEditor from "@uiw/react-md-editor";
-import { get, post, put, uploadImage, uploadCV } from "../lib/api";
+import { get, post, put, uploadImage, uploadCV, uploadSynthesis } from "../lib/api";
 
 interface About {
   id: number;
@@ -29,8 +29,11 @@ export default function About() {
   const [uploading, setUploading] = useState(false);
   const [uploadingCV, setUploadingCV] = useState(false);
   const [cvSuccess, setCvSuccess] = useState("");
+  const [uploadingSynthesis, setUploadingSynthesis] = useState(false);
+  const [synthesisSuccess, setSynthesisSuccess] = useState("");
   const fileRef = useRef<HTMLInputElement>(null);
   const cvFileRef = useRef<HTMLInputElement>(null);
+  const synthesisFileRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     get<About | null>("/about/").then((data) => {
@@ -50,6 +53,19 @@ export default function About() {
 
   const set = (field: keyof typeof form, value: unknown) =>
     setForm((f) => ({ ...f, [field]: value }));
+
+  const handleSynthesisUpload = async (file: File) => {
+    setUploadingSynthesis(true);
+    setSynthesisSuccess("");
+    try {
+      await uploadSynthesis(file);
+      setSynthesisSuccess("Tableau de synthèse mis à jour.");
+    } catch {
+      setError("Erreur upload tableau de synthèse");
+    } finally {
+      setUploadingSynthesis(false);
+    }
+  };
 
   const handleCVUpload = async (file: File) => {
     setUploadingCV(true);
@@ -164,6 +180,19 @@ export default function About() {
                 </button>
               </div>
               {cvSuccess && <div className="msg msg-success" style={{ marginTop: "0.4rem" }}>{cvSuccess}</div>}
+            </div>
+
+            <div className="form-group full">
+              <label>Tableau de synthèse (PDF)</label>
+              <div className="input-upload">
+                <input ref={synthesisFileRef} type="file" accept="application/pdf" style={{ display: "none" }}
+                  onChange={(e) => e.target.files?.[0] && handleSynthesisUpload(e.target.files[0])} />
+                <button type="button" className="btn btn-secondary btn-sm"
+                  onClick={() => synthesisFileRef.current?.click()} disabled={uploadingSynthesis}>
+                  {uploadingSynthesis ? "Envoi..." : "📎 Importer PDF"}
+                </button>
+              </div>
+              {synthesisSuccess && <div className="msg msg-success" style={{ marginTop: "0.4rem" }}>{synthesisSuccess}</div>}
             </div>
             <div className="form-group">
               <div className="form-check" style={{ marginTop: "1.8rem" }}>

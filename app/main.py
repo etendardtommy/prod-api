@@ -11,6 +11,7 @@ from app.routers import auth, roster, gallery, projects, articles, experiences, 
 from app.routers import skills
 from app.routers import about
 from app.routers import cv
+from app.routers import synthesis
 
 
 @asynccontextmanager
@@ -57,6 +58,7 @@ app.include_router(upload.router, prefix="/api/upload", tags=["Upload"])
 app.include_router(skills.router, prefix="/api/skills", tags=["Compétences"])
 app.include_router(about.router, prefix="/api/about", tags=["À propos"])
 app.include_router(cv.router, prefix="/api/cv", tags=["CV"])
+app.include_router(synthesis.router, prefix="/api/synthesis", tags=["Synthèse"])
 
 
 @app.get("/")

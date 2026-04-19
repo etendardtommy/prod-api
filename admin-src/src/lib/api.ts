@@ -58,6 +58,20 @@ export async function del(path: string): Promise<void> {
   await fetch(BASE + path, { method: "DELETE", headers: authHeaders() });
 }
 
+export async function uploadSynthesis(file: File): Promise<void> {
+  const form = new FormData();
+  form.append("file", file);
+  const r = await fetch(BASE + "/synthesis/upload", {
+    method: "POST",
+    headers: {
+      "Authorization": `Bearer ${getToken()}`,
+      "x-site-id": getSiteId(),
+    },
+    body: form,
+  });
+  if (!r.ok) throw new Error(await r.text());
+}
+
 export async function uploadCV(file: File): Promise<void> {
   const form = new FormData();
   form.append("file", file);
