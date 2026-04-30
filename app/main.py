@@ -1,12 +1,15 @@
 from contextlib import asynccontextmanager
-from fastapi import FastAPI
+from fastapi import FastAPI, Depends
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, Response
+from sqlalchemy.orm import Session
 import os
 from app.config import ALLOWED_ORIGINS, UPLOAD_DIR
-from app.database import engine, Base
+from app.database import engine, Base, get_db
 from app.models import *  # noqa: F401, F403
+from app.models.article import Article
+from app.models.project import Project
 from app.routers import auth, roster, gallery, projects, articles, experiences, messages, analytics, upload
 from app.routers import skills
 from app.routers import about
@@ -64,6 +67,49 @@ app.include_router(synthesis.router, prefix="/api/synthesis", tags=["Synthèse"]
 @app.get("/")
 async def root():
     return {"message": "API Multi-Site v2"}
+
+
+PORTFOLIO_URL = "https://portfolio.t-etendard.fr"
+
+STATIC_URLS = [
+    "/",
+    "/portfolio",
+    "/articles",
+    "/journey",
+    "/skills",
+    "/about",
+    "/contact",
+]
+
+
+@app.get("/sitemap.xml", include_in_schema=False)
+async def sitemap(db: Session = Depends(get_db)):
+    urls = [f"<url><loc>{PORTFOLIO_URL}{path}</loc></url>" for path in STATIC_URLS]
+
+    articles = (
+        db.query(Article.slug)
+        .filter(Article.site_id == 1, Article.published == True)
+        .all()
+    )
+    for (slug,) in articles:
+        if slug:
+            urls.append(f"<url><loc>{PORTFOLIO_URL}/articles/{slug}</loc></url>")
+
+    projects = (
+        db.query(Project.slug)
+        .filter(Project.site_id == 1, Project.published == True)
+        .all()
+    )
+    for (slug,) in projects:
+        if slug:
+            urls.append(f"<url><loc>{PORTFOLIO_URL}/portfolio/{slug}</loc></url>")
+
+    xml = '<?xml version="1.0" encoding="UTF-8"?>\n'
+    xml += '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n'
+    xml += "\n".join(urls)
+    xml += "\n</urlset>"
+
+    return Response(content=xml, media_type="application/xml")
 
 
 # Admin SPA — fallback SPA : sert le fichier s'il existe, sinon index.html
