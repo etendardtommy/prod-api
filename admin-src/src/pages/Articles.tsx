@@ -44,6 +44,8 @@ export default function Articles() {
   const [uploading, setUploading] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
   const mdFileRef = useRef<HTMLInputElement>(null);
+  const contentImgRef = useRef<HTMLInputElement>(null);
+  const editorWrapRef = useRef<HTMLDivElement>(null);
 
   const load = () => get<Article[]>("/articles").then(setItems).catch(() => {});
   useEffect(() => { load(); }, []);
@@ -81,6 +83,29 @@ export default function Articles() {
     setUploading(true);
     try { const url = await uploadImage(file); setField("image_url", url); }
     catch { setError("Erreur upload image"); }
+    finally { setUploading(false); }
+  };
+
+  const handleContentImageUpload = async (file: File) => {
+    setUploading(true);
+    try {
+      const url = await uploadImage(file);
+      const snippet = `![](${url})`;
+      const textarea = editorWrapRef.current?.querySelector("textarea") ?? null;
+      const current = form.content || "";
+      if (textarea) {
+        const start = textarea.selectionStart ?? current.length;
+        const end = textarea.selectionEnd ?? current.length;
+        const newContent = current.slice(0, start) + snippet + current.slice(end);
+        setField("content", newContent);
+        requestAnimationFrame(() => {
+          textarea.selectionStart = textarea.selectionEnd = start + snippet.length;
+          textarea.focus();
+        });
+      } else {
+        setField("content", current + "\n" + snippet);
+      }
+    } catch { setError("Erreur upload image"); }
     finally { setUploading(false); }
   };
 
@@ -191,13 +216,19 @@ export default function Articles() {
                       onClick={() => mdFileRef.current?.click()}>
                       📄 Importer .md
                     </button>
+                    <input ref={contentImgRef} type="file" accept="image/*" style={{ display: "none" }}
+                      onChange={(e) => { if (e.target.files?.[0]) { handleContentImageUpload(e.target.files[0]); e.target.value = ""; } }} />
+                    <button type="button" className="btn btn-secondary btn-sm"
+                      onClick={() => contentImgRef.current?.click()} disabled={uploading}>
+                      {uploading ? "Envoi..." : "🖼 Insérer image"}
+                    </button>
                     <button type="button" className="btn btn-secondary btn-sm"
                       onClick={() => setField("content", "")}>
                       Vider
                     </button>
                   </div>
                 </div>
-                <div data-color-mode="light">
+                <div data-color-mode="light" ref={editorWrapRef}>
                   <MDEditor value={form.content || ""} onChange={(v) => setField("content", v || "")} height={320} preview="live" />
                 </div>
               </div>
