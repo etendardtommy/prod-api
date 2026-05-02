@@ -103,7 +103,7 @@ def sync():
             matches = eva_get(
                 "/matches",
                 params={"participant_ids": participant_id},
-                range_header="matches=0-99",
+                range_header="matches=0-49",
             )
         except Exception as e:
             print(f"Erreur matchs {tournament_name}: {e}")
