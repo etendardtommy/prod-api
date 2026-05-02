@@ -9,7 +9,10 @@ from app.schemas.match import MatchPublic
 router = APIRouter()
 
 EVA_API = "https://competitive.eva.gg/api"
+EVA_MEDIA = "https://competitive.eva.gg/media/file"
 UA = "Mozilla/5.0 (compatible; ECLYPS-sync/1.0)"
+
+JARL_RANKING_ID = "2441507312469446655"
 
 
 @router.get("/public", response_model=list[MatchPublic])
@@ -26,61 +29,36 @@ async def get_public_matches(
 
 
 @router.get("/standings")
-async def get_standings(
-    x_site_id: int = Header(default=2, alias="x-site-id"),
-    db: Session = Depends(get_db),
-):
-    # Trouve le tournoi le plus récent avec des matchs joués
-    last_match = (
-        db.query(Match)
-        .filter(Match.site_id == x_site_id, Match.status == "completed")
-        .order_by(Match.played_at.desc().nullslast())
-        .first()
-    )
-    if not last_match:
-        return []
-
-    tournament_id = last_match.tournament_id
-    tournament_name = last_match.tournament_name
-
-    # Récupère tous les matchs du tournoi depuis l'API EVA
+async def get_standings():
     try:
         req = urllib.request.Request(
-            f"{EVA_API}/matches?tournament_ids={tournament_id}",
+            f"{EVA_API}/circuit-ranking-items?ranking_ids={JARL_RANKING_ID}",
             headers={"User-Agent": UA, "Accept": "application/json"},
         )
-        req.add_header("Range", "matches=0-99")
+        req.add_header("Range", "items=0-49")
         with urllib.request.urlopen(req, timeout=10) as r:
-            all_matches = json.loads(r.read())
+            items = json.loads(r.read())
     except Exception:
         raise HTTPException(status_code=502, detail="Impossible de contacter l'API EVA")
 
-    # Calcule le classement
-    teams: dict[str, dict] = {}
-    for m in all_matches:
-        if m.get("status") != "completed":
-            continue
-        for opp in m.get("opponents", []):
-            p = opp.get("participant", {})
-            name = p.get("name") or "?"
-            logo_fields = p.get("customFieldValues", {}).get("logo", {})
-            logo = logo_fields.get("logo_medium") or logo_fields.get("icon_medium")
-            result = opp.get("result")
+    if not items:
+        return []
 
-            if name not in teams:
-                teams[name] = {"name": name, "logo": logo, "wins": 0, "losses": 0, "draws": 0, "points": 0, "played": 0}
-            teams[name]["played"] += 1
-            if result == "win":
-                teams[name]["wins"] += 1
-                teams[name]["points"] += 3
-            elif result == "loss":
-                teams[name]["losses"] += 1
-            elif result == "draw":
-                teams[name]["draws"] += 1
-                teams[name]["points"] += 1
+    tournament_name = items[0]["ranking"]["name"]
+    standings = []
+    for item in items:
+        entity = item.get("entity") or {}
+        logo_obj = entity.get("logo") or {}
+        logo_id = logo_obj.get("id") if isinstance(logo_obj, dict) else None
+        logo_url = f"{EVA_MEDIA}/{logo_id}/logo_medium" if logo_id else None
+        props = item.get("properties") or {}
+        standings.append({
+            "rank": item["rank"],
+            "position": item["position"],
+            "name": entity.get("name", "?"),
+            "logo": logo_url,
+            "points": item["points"],
+            "played": props.get("played", 0),
+        })
 
-    ranking = sorted(teams.values(), key=lambda t: (-t["points"], -t["wins"]))
-    for i, team in enumerate(ranking, 1):
-        team["rank"] = i
-
-    return {"tournament_name": tournament_name, "standings": ranking}
+    return {"tournament_name": tournament_name, "standings": standings}
