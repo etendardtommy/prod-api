@@ -8,10 +8,10 @@ echo "Mise à jour du code..."
 git pull origin main
 
 echo "Installation des dépendances Python..."
-uv sync
+~/.local/bin/uv sync
 
 echo "Migrations base de données..."
-uv run alembic upgrade head
+~/.local/bin/uv run alembic upgrade head
 
 echo "Build du panel admin..."
 cd admin-src

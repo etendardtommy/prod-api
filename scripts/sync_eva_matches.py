@@ -110,87 +110,94 @@ def sync():
             errors += 1
             continue
 
-            for match in matches:
-                try:
-                    eva_match_id = str(match.get("id", ""))
-                    if not eva_match_id:
-                        continue
+        print(f"  {len(matches)} matchs récupérés")
+        if matches:
+            print(f"  Exemple match[0] keys: {list(matches[0].keys())}")
+            print(f"  opponents[0]: {matches[0].get('opponents', [])}")
 
-                    opponents = match.get("opponents", [])
-                    eclyps_opp = None
-                    other_opp = None
+        for match in matches:
+            try:
+                eva_match_id = str(match.get("id", ""))
+                if not eva_match_id:
+                    continue
 
-                    for opp in opponents:
-                        p = opp.get("participant", {})
-                        if str(p.get("id", "")) == participant_id:
-                            eclyps_opp = opp
-                        else:
-                            other_opp = opp
+                opponents = match.get("opponents", [])
+                eclyps_opp = None
+                other_opp = None
 
-                    if not other_opp:
-                        continue
-
-                    other_p = other_opp.get("participant", {})
-                    opponent_name = (
-                        other_p.get("name")
-                        or other_p.get("team", {}).get("name")
-                        or "Adversaire inconnu"
-                    )
-                    opponent_logo_url = (
-                        other_p.get("logoUrl")
-                        or other_p.get("team", {}).get("logoUrl")
-                    )
-
-                    score_eclyps = eclyps_opp.get("score") if eclyps_opp else None
-                    score_opponent = other_opp.get("score")
-
-                    result_raw = eclyps_opp.get("result") if eclyps_opp else None
-                    result = result_raw if result_raw in ("win", "loss", "draw") else None
-
-                    match_status = match.get("status", "pending")
-                    scheduled_at = parse_dt(match.get("scheduledAt"))
-                    played_at = parse_dt(match.get("playedAt"))
-
-                    stage = match.get("stage") or {}
-                    division = stage.get("name") if isinstance(stage, dict) else str(stage) if stage else None
-
-                    existing = db.query(Match).filter(Match.eva_match_id == eva_match_id).first()
-                    if existing:
-                        existing.tournament_name = tournament_name
-                        existing.division = division
-                        existing.opponent_name = opponent_name
-                        existing.opponent_logo_url = opponent_logo_url
-                        existing.scheduled_at = scheduled_at
-                        existing.played_at = played_at
-                        existing.status = match_status
-                        existing.score_eclyps = score_eclyps
-                        existing.score_opponent = score_opponent
-                        existing.result = result
-                        existing.synced_at = datetime.now(timezone.utc)
+                for opp in opponents:
+                    p = opp.get("participant", {})
+                    if str(p.get("id", "")) == participant_id:
+                        eclyps_opp = opp
                     else:
-                        db.add(Match(
-                            site_id=SITE_ID,
-                            eva_match_id=eva_match_id,
-                            tournament_id=tournament_id,
-                            tournament_name=tournament_name,
-                            division=division,
-                            opponent_name=opponent_name,
-                            opponent_logo_url=opponent_logo_url,
-                            scheduled_at=scheduled_at,
-                            played_at=played_at,
-                            status=match_status,
-                            score_eclyps=score_eclyps,
-                            score_opponent=score_opponent,
-                            result=result,
-                        ))
+                        other_opp = opp
 
-                    db.commit()
-                    synced += 1
+                print(f"  match {eva_match_id}: eclyps_opp={eclyps_opp is not None}, other_opp={other_opp is not None}")
 
-                except Exception as e:
-                    db.rollback()
-                    print(f"Erreur match {match.get('id')}: {e}")
-                    errors += 1
+                if not other_opp:
+                    continue
+
+                other_p = other_opp.get("participant", {})
+                opponent_name = (
+                    other_p.get("name")
+                    or other_p.get("team", {}).get("name")
+                    or "Adversaire inconnu"
+                )
+                opponent_logo_url = (
+                    other_p.get("logoUrl")
+                    or other_p.get("team", {}).get("logoUrl")
+                )
+
+                score_eclyps = eclyps_opp.get("score") if eclyps_opp else None
+                score_opponent = other_opp.get("score")
+
+                result_raw = eclyps_opp.get("result") if eclyps_opp else None
+                result = result_raw if result_raw in ("win", "loss", "draw") else None
+
+                match_status = match.get("status", "pending")
+                scheduled_at = parse_dt(match.get("scheduledAt"))
+                played_at = parse_dt(match.get("playedAt"))
+
+                stage = match.get("stage") or {}
+                division = stage.get("name") if isinstance(stage, dict) else str(stage) if stage else None
+
+                existing = db.query(Match).filter(Match.eva_match_id == eva_match_id).first()
+                if existing:
+                    existing.tournament_name = tournament_name
+                    existing.division = division
+                    existing.opponent_name = opponent_name
+                    existing.opponent_logo_url = opponent_logo_url
+                    existing.scheduled_at = scheduled_at
+                    existing.played_at = played_at
+                    existing.status = match_status
+                    existing.score_eclyps = score_eclyps
+                    existing.score_opponent = score_opponent
+                    existing.result = result
+                    existing.synced_at = datetime.now(timezone.utc)
+                else:
+                    db.add(Match(
+                        site_id=SITE_ID,
+                        eva_match_id=eva_match_id,
+                        tournament_id=tournament_id,
+                        tournament_name=tournament_name,
+                        division=division,
+                        opponent_name=opponent_name,
+                        opponent_logo_url=opponent_logo_url,
+                        scheduled_at=scheduled_at,
+                        played_at=played_at,
+                        status=match_status,
+                        score_eclyps=score_eclyps,
+                        score_opponent=score_opponent,
+                        result=result,
+                    ))
+
+                db.commit()
+                synced += 1
+
+            except Exception as e:
+                db.rollback()
+                print(f"Erreur match {match.get('id')}: {e}")
+                errors += 1
 
     db.close()
     print(f"Sync terminé — {synced} matchs traités, {errors} erreurs.")
