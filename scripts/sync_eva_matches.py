@@ -110,11 +110,6 @@ def sync():
             errors += 1
             continue
 
-        print(f"  {len(matches)} matchs récupérés")
-        if matches:
-            print(f"  Exemple match[0] keys: {list(matches[0].keys())}")
-            print(f"  opponents[0]: {matches[0].get('opponents', [])}")
-
         for match in matches:
             try:
                 eva_match_id = str(match.get("id", ""))
@@ -132,21 +127,13 @@ def sync():
                     else:
                         other_opp = opp
 
-                print(f"  match {eva_match_id}: eclyps_opp={eclyps_opp is not None}, other_opp={other_opp is not None}")
-
                 if not other_opp:
                     continue
 
                 other_p = other_opp.get("participant", {})
-                opponent_name = (
-                    other_p.get("name")
-                    or other_p.get("team", {}).get("name")
-                    or "Adversaire inconnu"
-                )
-                opponent_logo_url = (
-                    other_p.get("logoUrl")
-                    or other_p.get("team", {}).get("logoUrl")
-                )
+                opponent_name = other_p.get("name") or "Adversaire inconnu"
+                logo_fields = other_p.get("customFieldValues", {}).get("logo", {})
+                opponent_logo_url = logo_fields.get("logo_medium") or logo_fields.get("icon_medium")
 
                 score_eclyps = eclyps_opp.get("score") if eclyps_opp else None
                 score_opponent = other_opp.get("score")
@@ -155,7 +142,7 @@ def sync():
                 result = result_raw if result_raw in ("win", "loss", "draw") else None
 
                 match_status = match.get("status", "pending")
-                scheduled_at = parse_dt(match.get("scheduledAt"))
+                scheduled_at = parse_dt(match.get("scheduledDatetime"))
                 played_at = parse_dt(match.get("playedAt"))
 
                 stage = match.get("stage") or {}
