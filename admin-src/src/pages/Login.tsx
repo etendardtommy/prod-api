@@ -13,12 +13,11 @@ export default function Login() {
     try {
       const r = await fetch("/api/auth/login", {
         method: "POST",
-        headers: { "Content-Type": "application/json", "x-site-id": "1" },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, password }),
+        credentials: "include",
       });
       if (!r.ok) { setError("Email ou mot de passe incorrect"); return; }
-      const data = await r.json() as { access_token: string };
-      localStorage.setItem("admin_token", data.access_token);
       navigate("/");
     } catch {
       setError("Erreur de connexion");

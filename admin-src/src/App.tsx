@@ -1,5 +1,5 @@
-import { BrowserRouter, Routes, Route, Navigate, NavLink, useNavigate } from "react-router-dom";
-import { useState } from "react";
+import { BrowserRouter, Routes, Route, NavLink, useNavigate } from "react-router-dom";
+import { useState, useEffect } from "react";
 import Login from "./pages/Login";
 import Dashboard from "./pages/Dashboard";
 import Projects from "./pages/Projects";
@@ -12,9 +12,6 @@ import Skills from "./pages/Skills";
 import About from "./pages/About";
 import { getSiteId, setSiteId } from "./lib/api";
 
-function isLoggedIn() {
-  return !!localStorage.getItem("admin_token");
-}
 
 const SITES = [
   { id: "1", label: "Portfolio" },
@@ -49,8 +46,8 @@ function Sidebar() {
     navigate("/");
   };
 
-  const logout = () => {
-    localStorage.removeItem("admin_token");
+  const logout = async () => {
+    await fetch("/api/auth/logout", { method: "POST", credentials: "include" });
     navigate("/login");
   };
 
@@ -94,7 +91,23 @@ function Sidebar() {
 }
 
 function Layout({ children }: { children: React.ReactNode }) {
-  if (!isLoggedIn()) return <Navigate to="/login" replace />;
+  const [checked, setChecked] = useState(false);
+  const [authed, setAuthed] = useState(false);
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    fetch("/api/auth/me", { credentials: "include" })
+      .then((r) => {
+        if (r.ok) setAuthed(true);
+        else navigate("/login", { replace: true });
+      })
+      .catch(() => navigate("/login", { replace: true }))
+      .finally(() => setChecked(true));
+  }, [navigate]);
+
+  if (!checked) return null;
+  if (!authed) return null;
+
   return (
     <div className="layout">
       <Sidebar />
