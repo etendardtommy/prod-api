@@ -8,6 +8,7 @@ from app.models.message import Message
 from app.models.analytics import PageView
 from app.models.skill import Skill
 from app.models.about import About
+from app.models.match import Match
 
 __all__ = [
     "User",
@@ -20,4 +21,5 @@ __all__ = [
     "PageView",
     "Skill",
     "About",
+    "Match",
 ]

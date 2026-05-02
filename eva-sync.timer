@@ -1,0 +1,11 @@
+[Unit]
+Description=Run EVA match sync every 6 hours
+Requires=eva-sync.service
+
+[Timer]
+OnBootSec=5min
+OnUnitActiveSec=6h
+Persistent=true
+
+[Install]
+WantedBy=timers.target

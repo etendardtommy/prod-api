@@ -1,0 +1,12 @@
+[Unit]
+Description=Sync ECLYPS matches from EVA competitive
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+WorkingDirectory=/srv/api
+ExecStart=/srv/api/.venv/bin/python scripts/sync_eva_matches.py
+User=tommy
+StandardOutput=journal
+StandardError=journal
