@@ -14,7 +14,8 @@ import sys
 import os
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-import httpx
+import json
+import urllib.request
 from datetime import datetime, timezone
 from app.database import SessionLocal
 from app.models.match import Match
@@ -25,13 +26,16 @@ ECLYPS_NAME = "ECLYPS"
 SITE_ID = 2
 
 
-def eva_get(client, path, params=None, range_header=None):
-    headers = {}
+def eva_get(path, params=None, range_header=None):
+    url = f"{EVA_API}{path}"
+    if params:
+        query = "&".join(f"{k}={v}" for k, v in params.items())
+        url = f"{url}?{query}"
+    req = urllib.request.Request(url)
     if range_header:
-        headers["Range"] = range_header
-    r = client.get(f"{EVA_API}{path}", params=params, headers=headers, timeout=15)
-    r.raise_for_status()
-    return r.json()
+        req.add_header("Range", range_header)
+    with urllib.request.urlopen(req, timeout=15) as resp:
+        return json.loads(resp.read())
 
 
 def parse_dt(value):
@@ -48,65 +52,60 @@ def sync():
     synced = 0
     errors = 0
 
-    with httpx.Client() as client:
-        # 1. Fetch recent EVA Caen tournaments
+    # 1. Fetch recent EVA Caen tournaments
+    try:
+        tournaments = eva_get(
+            "/tournaments",
+            params={"organization_ids": EVA_CAEN_ORG_ID},
+            range_header="tournaments=0-19",
+        )
+    except Exception as e:
+        print(f"Erreur fetch tournois: {e}")
+        db.close()
+        return
+
+    print(f"{len(tournaments)} tournois trouvés pour EVA Caen.")
+
+    for tournament in tournaments:
+        tournament_id = str(tournament.get("id", ""))
+        tournament_name = tournament.get("name") or "JARL League"
+
+        if not tournament_id:
+            continue
+
+        # 2. List participants and find ECLYPS
         try:
-            tournaments = eva_get(
-                client,
-                "/tournaments",
-                params={"organization_ids": EVA_CAEN_ORG_ID},
-                range_header="tournaments=0-19",
+            participants = eva_get(
+                "/participants",
+                params={"tournament_ids": tournament_id},
+                range_header="participants=0-99",
             )
         except Exception as e:
-            print(f"Erreur fetch tournois: {e}")
-            db.close()
-            return
+            print(f"Erreur participants {tournament_name}: {e}")
+            continue
 
-        print(f"{len(tournaments)} tournois trouvés pour EVA Caen.")
+        eclyps_participant = next(
+            (p for p in participants if (p.get("name") or "").upper() == ECLYPS_NAME),
+            None,
+        )
 
-        for tournament in tournaments:
-            tournament_id = str(tournament.get("id", ""))
-            tournament_name = tournament.get("name") or "JARL League"
-            status = tournament.get("status", "")
+        if not eclyps_participant:
+            continue
 
-            if not tournament_id:
-                continue
+        participant_id = str(eclyps_participant.get("id", ""))
+        print(f"ECLYPS trouvé dans {tournament_name} (participant_id={participant_id})")
 
-            # 2. List participants and find ECLYPS
-            try:
-                participants = eva_get(
-                    client,
-                    "/participants",
-                    params={"tournament_ids": tournament_id},
-                    range_header="participants=0-99",
-                )
-            except Exception as e:
-                print(f"Erreur participants {tournament_name}: {e}")
-                continue
-
-            eclyps_participant = next(
-                (p for p in participants if (p.get("name") or "").upper() == ECLYPS_NAME),
-                None,
+        # 3. Fetch matches for this participant
+        try:
+            matches = eva_get(
+                "/matches",
+                params={"participant_ids": participant_id},
+                range_header="matches=0-99",
             )
-
-            if not eclyps_participant:
-                continue
-
-            participant_id = str(eclyps_participant.get("id", ""))
-            print(f"ECLYPS trouvé dans {tournament_name} (participant_id={participant_id})")
-
-            # 3. Fetch matches for this participant
-            try:
-                matches = eva_get(
-                    client,
-                    "/matches",
-                    params={"participant_ids": participant_id},
-                    range_header="matches=0-99",
-                )
-            except Exception as e:
-                print(f"Erreur matchs {tournament_name}: {e}")
-                errors += 1
-                continue
+        except Exception as e:
+            print(f"Erreur matchs {tournament_name}: {e}")
+            errors += 1
+            continue
 
             for match in matches:
                 try:
