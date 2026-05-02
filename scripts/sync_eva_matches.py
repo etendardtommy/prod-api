@@ -26,12 +26,15 @@ ECLYPS_NAME = "ECLYPS"
 SITE_ID = 2
 
 
+UA = "Mozilla/5.0 (compatible; ECLYPS-sync/1.0)"
+
+
 def eva_get(path, params=None, range_header=None):
     url = f"{EVA_API}{path}"
     if params:
         query = "&".join(f"{k}={v}" for k, v in params.items())
         url = f"{url}?{query}"
-    req = urllib.request.Request(url)
+    req = urllib.request.Request(url, headers={"User-Agent": UA, "Accept": "application/json"})
     if range_header:
         req.add_header("Range", range_header)
     with urllib.request.urlopen(req, timeout=15) as resp:
