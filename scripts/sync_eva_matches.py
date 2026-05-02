@@ -2,27 +2,34 @@
 Sync ECLYPS matches from competitive.eva.gg into the local database.
 Run manually or via systemd timer (every 6h).
 
+Strategy:
+  1. Fetch recent tournaments from EVA Caen (organization_id hardcoded)
+  2. For each tournament, list participants and find ECLYPS by name
+  3. Fetch all matches for ECLYPS's participant_id in that tournament
+  4. Upsert into DB
+
 Usage: uv run python scripts/sync_eva_matches.py
 """
 import sys
 import os
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-import httpx as requests
+import httpx
 from datetime import datetime, timezone
 from app.database import SessionLocal
 from app.models.match import Match
 
 EVA_API = "https://competitive.eva.gg/api"
-ECLYPS_TEAM_ID = "2448652881169059839"
+EVA_CAEN_ORG_ID = "2444249435255883775"
+ECLYPS_NAME = "ECLYPS"
 SITE_ID = 2
 
 
-def eva_get(path, params=None, range_header=None):
+def eva_get(client, path, params=None, range_header=None):
     headers = {}
     if range_header:
         headers["Range"] = range_header
-    r = requests.get(f"{EVA_API}{path}", params=params, headers=headers, timeout=15)
+    r = client.get(f"{EVA_API}{path}", params=params, headers=headers, timeout=15)
     r.raise_for_status()
     return r.json()
 
@@ -41,36 +48,63 @@ def sync():
     synced = 0
     errors = 0
 
-    try:
-        # 1. Find all tournament registrations for ECLYPS
-        participants = eva_get(
-            "/participants",
-            params={"team_id": ECLYPS_TEAM_ID},
-            range_header="participants=0-49",
-        )
-
-        if not participants:
-            print("Aucune participation trouvée pour ECLYPS.")
+    with httpx.Client() as client:
+        # 1. Fetch recent EVA Caen tournaments
+        try:
+            tournaments = eva_get(
+                client,
+                "/tournaments",
+                params={"organization_ids": EVA_CAEN_ORG_ID},
+                range_header="tournaments=0-19",
+            )
+        except Exception as e:
+            print(f"Erreur fetch tournois: {e}")
+            db.close()
             return
 
-        for participant in participants:
-            participant_id = str(participant.get("id", ""))
-            tournament = participant.get("tournament", {})
+        print(f"{len(tournaments)} tournois trouvés pour EVA Caen.")
+
+        for tournament in tournaments:
             tournament_id = str(tournament.get("id", ""))
             tournament_name = tournament.get("name") or "JARL League"
+            status = tournament.get("status", "")
 
-            if not participant_id or not tournament_id:
+            if not tournament_id:
                 continue
 
-            # 2. Fetch matches for this participant
+            # 2. List participants and find ECLYPS
+            try:
+                participants = eva_get(
+                    client,
+                    "/participants",
+                    params={"tournament_ids": tournament_id},
+                    range_header="participants=0-99",
+                )
+            except Exception as e:
+                print(f"Erreur participants {tournament_name}: {e}")
+                continue
+
+            eclyps_participant = next(
+                (p for p in participants if (p.get("name") or "").upper() == ECLYPS_NAME),
+                None,
+            )
+
+            if not eclyps_participant:
+                continue
+
+            participant_id = str(eclyps_participant.get("id", ""))
+            print(f"ECLYPS trouvé dans {tournament_name} (participant_id={participant_id})")
+
+            # 3. Fetch matches for this participant
             try:
                 matches = eva_get(
+                    client,
                     "/matches",
                     params={"participant_ids": participant_id},
                     range_header="matches=0-99",
                 )
             except Exception as e:
-                print(f"Erreur fetch matchs pour participant {participant_id}: {e}")
+                print(f"Erreur matchs {tournament_name}: {e}")
                 errors += 1
                 continue
 
@@ -94,39 +128,30 @@ def sync():
                     if not other_opp:
                         continue
 
+                    other_p = other_opp.get("participant", {})
                     opponent_name = (
-                        other_opp.get("participant", {}).get("name")
-                        or other_opp.get("participant", {}).get("team", {}).get("name")
+                        other_p.get("name")
+                        or other_p.get("team", {}).get("name")
                         or "Adversaire inconnu"
                     )
                     opponent_logo_url = (
-                        other_opp.get("participant", {}).get("logoUrl")
-                        or other_opp.get("participant", {}).get("team", {}).get("logoUrl")
+                        other_p.get("logoUrl")
+                        or other_p.get("team", {}).get("logoUrl")
                     )
 
                     score_eclyps = eclyps_opp.get("score") if eclyps_opp else None
                     score_opponent = other_opp.get("score")
 
                     result_raw = eclyps_opp.get("result") if eclyps_opp else None
-                    if result_raw == "win":
-                        result = "win"
-                    elif result_raw == "loss":
-                        result = "loss"
-                    elif result_raw == "draw":
-                        result = "draw"
-                    else:
-                        result = None
+                    result = result_raw if result_raw in ("win", "loss", "draw") else None
 
-                    status = match.get("status", "pending")
+                    match_status = match.get("status", "pending")
                     scheduled_at = parse_dt(match.get("scheduledAt"))
                     played_at = parse_dt(match.get("playedAt"))
 
-                    division = None
                     stage = match.get("stage") or {}
-                    if stage.get("name"):
-                        division = stage["name"]
+                    division = stage.get("name") if isinstance(stage, dict) else str(stage) if stage else None
 
-                    # Upsert
                     existing = db.query(Match).filter(Match.eva_match_id == eva_match_id).first()
                     if existing:
                         existing.tournament_name = tournament_name
@@ -135,7 +160,7 @@ def sync():
                         existing.opponent_logo_url = opponent_logo_url
                         existing.scheduled_at = scheduled_at
                         existing.played_at = played_at
-                        existing.status = status
+                        existing.status = match_status
                         existing.score_eclyps = score_eclyps
                         existing.score_opponent = score_opponent
                         existing.result = result
@@ -151,7 +176,7 @@ def sync():
                             opponent_logo_url=opponent_logo_url,
                             scheduled_at=scheduled_at,
                             played_at=played_at,
-                            status=status,
+                            status=match_status,
                             score_eclyps=score_eclyps,
                             score_opponent=score_opponent,
                             result=result,
@@ -165,9 +190,7 @@ def sync():
                     print(f"Erreur match {match.get('id')}: {e}")
                     errors += 1
 
-    finally:
-        db.close()
-
+    db.close()
     print(f"Sync terminé — {synced} matchs traités, {errors} erreurs.")
 
 
