@@ -4,9 +4,12 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse, Response
 from sqlalchemy.orm import Session
+from slowapi import _rate_limit_exceeded_handler
+from slowapi.errors import RateLimitExceeded
 import os
 from app.config import ALLOWED_ORIGINS, UPLOAD_DIR
 from app.database import engine, Base, get_db
+from app.limiter import limiter
 from app.models import *  # noqa: F401, F403
 from app.models.article import Article
 from app.models.project import Project
@@ -34,6 +37,9 @@ app = FastAPI(
     redoc_url=None,
     openapi_url=None,
 )
+
+app.state.limiter = limiter
+app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
 app.add_middleware(
     CORSMiddleware,

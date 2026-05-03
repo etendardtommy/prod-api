@@ -3,6 +3,7 @@ from sqlalchemy import func
 from sqlalchemy.orm import Session
 from app.database import get_db
 from app.auth import get_current_user
+from app.limiter import limiter
 from app.models.analytics import PageView
 from app.models.user import User
 from app.schemas.analytics import VisitCreate, AnalyticsSummary
@@ -13,6 +14,7 @@ router = APIRouter()
 # --- Public ---
 
 @router.post("/visit", status_code=201)
+@limiter.limit("20/minute")
 async def track_visit(
     data: VisitCreate,
     request: Request,

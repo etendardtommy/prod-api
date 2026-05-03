@@ -8,6 +8,7 @@ from app.config import UPLOAD_DIR
 router = APIRouter()
 
 CV_FILENAME = "cv.pdf"
+MAX_PDF_SIZE = 10 * 1024 * 1024  # 10 Mo
 
 
 def cv_path() -> str:
@@ -19,8 +20,14 @@ async def upload_cv(
     file: UploadFile = File(...),
     current_user: User = Depends(get_current_user),
 ):
+    if file.content_type != "application/pdf":
+        raise HTTPException(400, "Seuls les fichiers PDF sont acceptés")
+
+    content = await file.read(MAX_PDF_SIZE + 1)
+    if len(content) > MAX_PDF_SIZE:
+        raise HTTPException(413, "Fichier trop volumineux. Taille maximum : 10 Mo")
+
     os.makedirs(UPLOAD_DIR, exist_ok=True)
-    content = await file.read()
     with open(cv_path(), "wb") as f:
         f.write(content)
     return {"message": "CV mis à jour"}

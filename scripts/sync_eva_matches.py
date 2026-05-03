@@ -178,13 +178,17 @@ def sync():
                         result=result,
                     ))
 
-                db.commit()
                 synced += 1
 
             except Exception as e:
-                db.rollback()
                 print(f"Erreur match {match.get('id')}: {e}")
                 errors += 1
+
+        try:
+            db.commit()
+        except Exception as e:
+            db.rollback()
+            print(f"Erreur commit tournoi {tournament_name}: {e}")
 
     db.close()
     print(f"Sync terminé — {synced} matchs traités, {errors} erreurs.")
